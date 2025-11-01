@@ -1,9 +1,9 @@
-#include <../libraries/FastLED.h>
+#include <FastLED.h>
 
 #define DEBUG_MODE false
 
 // LED setup
-#define LED_PIN     6
+#define LED_PIN     7
 #define NUM_LEDS    60
 #define BRIGHTNESS  150
 #define LED_TYPE    WS2812B
@@ -11,7 +11,7 @@
 
 
 // IR Break Beam setup
-#define IR_SENSOR_PIN 5
+#define IR_SENSOR_PIN 8
 
 CRGB leds[NUM_LEDS];
 
@@ -30,31 +30,34 @@ void setup() {
 
 void loop() {
   int sensorState = digitalRead(IR_SENSOR_PIN);
-  
-  // Show real-time readings
-  if (DEBUG_MODE == true) {
+
+  // Only show raw reading every 100ms (if debugging enabled)
+  static unsigned long lastDebugPrint = 0;
+  if (DEBUG_MODE && millis() - lastDebugPrint > 100) {
     Serial.print("Raw sensor reading: ");
     Serial.println(sensorState);
+    lastDebugPrint = millis();
   }
+
   // Debounce variables
   static int lastStableState = 1;  // Assume beam starts intact
   static unsigned long lastChangeTime = 0;
   static int lastReading = 1;
-  
+
   // Auto-reset variables
   static unsigned long beamBrokenTime = 0;
   static bool autoResetActive = false;
-  
+
   // Debounce logic
   if (sensorState != lastReading) {
     lastChangeTime = millis();
-    Serial.println("State change detected, starting debounce...");
+    if (DEBUG_MODE) Serial.println("State change detected, starting debounce...");
   }
-  
-  if ((millis() - lastChangeTime) > 100) {  // 100ms debounce
+
+  if ((millis() - lastChangeTime) > 50) {  // shorter debounce window (50ms)
     if (sensorState != lastStableState) {
       lastStableState = sensorState;
-      
+
       if (sensorState == 0) {  // Beam broken
         Serial.println("BEAM BROKEN (stable) - RED");
         fill_solid(leds, NUM_LEDS, CRGB::Red);
@@ -69,7 +72,7 @@ void loop() {
       }
     }
   }
-  
+
   // Auto-reset after 2 seconds
   if (autoResetActive && (millis() - beamBrokenTime > 2000)) {
     Serial.println("AUTO-RESET to green after 2 seconds");
@@ -78,7 +81,6 @@ void loop() {
     autoResetActive = false;
     lastStableState = 1;
   }
-  
+
   lastReading = sensorState;
-  delay(200);  // Slower for easier reading
 }

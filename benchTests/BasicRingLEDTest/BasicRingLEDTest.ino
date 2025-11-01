@@ -1,6 +1,6 @@
-#include <FastLED.h>
+#include <../../FastLED.h>
 
-#define LED_PIN     6       // Pin where the LED ring is connected
+#define LED_PIN     8       // Pin where the LED ring is connected
 #define NUM_LEDS    60      // Number of LEDs in the ring
 #define BRIGHTNESS  100      // Adjust 0–255
 #define LED_TYPE    WS2812B
